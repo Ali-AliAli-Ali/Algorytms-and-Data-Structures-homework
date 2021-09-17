@@ -1,0 +1,51 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+vector <int> divisors(int n)
+{
+    vector<int> vec = {1};
+    for (int i = 2; i <= n / 2; i++)
+        if (n % i == 0)
+            vec.push_back(i);
+    vec.push_back(n);
+
+    return vec;
+}
+
+string substring(string s, int start, int len) {
+    string subs;
+    for (int i = 0; i < len; i++) 
+        subs += s[start + i];
+    return subs;
+}
+
+
+int main()
+{
+    string s; cin >> s;
+    vector <int> subslen = divisors(s.size());
+    bool isperiod;
+    int res;
+
+    for (int i = 0; i < subslen.size(); i++) {
+        isperiod = 1;
+
+        for (int j = 1; j < subslen[subslen.size() - i - 1]; j++) {
+            if (substring(s, 0, subslen[i]) != substring(s, subslen[i] * j, subslen[i])) {
+                isperiod = 0;
+                break;
+            }
+        }
+        if (isperiod) {
+            cout << subslen[i];
+            break;
+        }
+    }
+    if (!isperiod) cout << s.size();
+    
+
+    return 0;
+}
