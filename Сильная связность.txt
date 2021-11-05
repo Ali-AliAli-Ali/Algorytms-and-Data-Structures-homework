@@ -1,0 +1,118 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+int extract_blocks(string str, int people) {
+	int i = 0;
+	while (people > 0) {
+		people /= 10;
+		i++;
+	}
+	return atoi(&(str.substr(i+2))[0]);
+}
+
+vector<vector<int>> graph_reversal(vector<vector<int>> &graph) {
+	vector<vector<int>> revgraph(graph.size(), {-1});
+	for (int i = 0; i < graph.size(); i++) {
+		if (graph[i][0] != -1) {
+			for (int j = 0; j < graph[i].size(); j++) {
+				if (revgraph[graph[i][j]][0] == -1) revgraph[graph[i][j]][0] = i;
+				else  revgraph[graph[i][j]].push_back(i);
+			}
+		}
+	}
+	return revgraph;
+}
+
+void DFS1(vector<vector<int>>& graph, int vertnum, vector<bool>& isvisited, vector<int>& visitorder) {
+	if (isvisited[vertnum]) return;
+
+	isvisited[vertnum] = true;
+	if (graph[vertnum][0] != -1)
+		for (int i = 0; i < graph[vertnum].size(); i++)
+			DFS1(graph, graph[vertnum][i], isvisited, visitorder);
+	visitorder.push_back(vertnum);
+}
+void DFS2(vector<vector<int>>& revgraph, int vertnum, vector<bool>& isvisited) {
+	if (isvisited[vertnum]) return;
+
+	isvisited[vertnum] = true;
+	if (revgraph[vertnum][0] != -1)
+		for (int i = 0; i < revgraph[vertnum].size(); i++)
+			DFS2(revgraph, revgraph[vertnum][i], isvisited);
+}
+
+
+
+int main() {
+	string str, trustb1, trustb2;
+	map <string, int> names;
+	int testcases = 0, people, blocks, compts;
+	bool newcase = false;
+
+	vector <vector <int>> revgraph;
+	vector <int> components;
+
+
+	getline(cin, str);
+	while (str != "0, 0") {
+		if (!newcase && isdigit(str[0])) {
+			people = atoi(&str[0]);
+			blocks = extract_blocks(str, people);
+			newcase = true;
+			continue;
+		}
+
+		newcase = false;
+		vector <vector <int>> graph(people, {-1});
+		for (int i = 0; i < people; i++) { 
+			getline(cin, str);
+			names[str] = i;
+		}
+		for (int i = 0; i < blocks; i++) {
+			getline(cin, trustb1);
+			getline(cin, trustb2);
+			if (graph[names[trustb1]][0] == -1)  
+				graph[names[trustb1]][0] = names[trustb2];
+			else  
+				graph[names[trustb1]].push_back(names[trustb2]);
+		}
+
+
+		revgraph = graph_reversal(graph);
+		vector <bool> isvisited(people);
+		vector <int> visitorder;
+		compts = 0;
+
+		isvisited.assign(people, false);
+		for (int i = 0; i < people; i++)
+			if (!isvisited[i])
+				DFS1(graph, i, isvisited, visitorder);
+
+		isvisited.assign(people, false);
+		for (int i = 0; i < people; i++) {
+			int j = visitorder[people - 1 - i];
+			if (!isvisited[j]) {
+				DFS2(revgraph, j, isvisited);
+				compts++;
+			}
+		}
+
+		graph.clear();
+		revgraph.clear();
+		names.clear();
+		isvisited.clear();
+		visitorder.clear();
+		components.push_back(compts);
+		compts = 0;
+		getline(cin, str);
+	}
+
+	for (int i = 0; i < components.size(); i++) cout << components[i] << endl;
+
+	return 0;
+}
