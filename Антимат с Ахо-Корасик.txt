@@ -1,0 +1,114 @@
+#include <iostream>
+#include <map>
+#include <string>
+
+using namespace std;
+
+struct Vertex {
+	map <char, int> nextvert;
+	bool iswordend;
+	int sufflink, par;
+	char ctopar;
+	map <char, int> pass;
+};
+
+Vertex Tree[10001];
+int Tsize;
+
+void Tree_create() {
+	Vertex TreeRoot;
+	TreeRoot.sufflink = 0;
+	TreeRoot.par = 0;
+	TreeRoot.iswordend = false;
+	Tsize = 1;
+}
+
+void add_pattern(string& pattern) {
+	int ivert = 0;
+	for (int i = 0; i < pattern.length(); i++) {
+		if (Tree[ivert].nextvert.find(pattern[i]) == Tree[ivert].nextvert.end()) {
+			Tree[Tsize].par = ivert;
+			Tree[Tsize].ctopar = pattern[i];
+			Tree[Tsize].sufflink = -1;
+			Tree[ivert].nextvert[pattern[i]] = Tsize;
+			Tsize++;
+		}
+		ivert = Tree[ivert].nextvert[pattern[i]];
+	}
+	Tree[ivert].iswordend = true;
+}
+
+
+int auto_step(int vert, char c);
+
+int make_link(int vert) {
+	if (Tree[vert].sufflink == -1) {
+		if (vert == 0 || Tree[vert].par == 0)
+			Tree[vert].sufflink = 0;
+		else
+			Tree[vert].sufflink = auto_step(make_link(Tree[vert].par), Tree[vert].ctopar);
+	}
+	return Tree[vert].sufflink;
+}
+
+int auto_step(int vert, char c) {
+	if (Tree[vert].pass.find(c) == Tree[vert].pass.end()) {
+		if (Tree[vert].nextvert.find(c) != Tree[vert].nextvert.end())
+			Tree[vert].pass[c] = Tree[vert].nextvert[c];
+		else {
+			if (vert == 0)  Tree[vert].pass[c] = 0;
+			else  Tree[vert].pass[c] = auto_step(make_link(vert), c);
+		}
+	}
+	return Tree[vert].pass[c];
+}
+
+
+pair <int, int> search_pattern(int ivert, string& str, int isym, pair<int, int> patfound) {
+	if (isym == str.length()+1)  return make_pair(0, 0);
+
+	if (Tree[ivert].iswordend)  return make_pair(isym, ivert);
+
+	patfound = search_pattern(auto_step(ivert, str[isym]), str, isym + 1, patfound);
+	return patfound;
+}
+
+int len_pattern(int matchvert) {
+	int len = 0;
+	while (Tree[matchvert].par != 0) {
+		matchvert = Tree[matchvert].par;
+		len++;
+	}
+	return len;
+}
+
+
+int main() {
+	string pattern; Tree_create();
+	int npat, patlen; cin >> npat; cin.ignore(1, '\n');
+	for (int i = 0; i < npat; i++) {
+		getline(cin, pattern);
+		add_pattern(pattern);
+	}
+
+	string str;
+	bool isfound = 0; 
+	pair <int, int> patfound;
+	int nstr; 
+	cin >> nstr; cin.ignore(1, '\n');
+	for (int istr = 0; istr < nstr; istr++) {
+		getline(cin, str);
+
+		patfound = search_pattern(0, str, 0, make_pair(0, 0));
+		if (patfound != make_pair(0, 0)) {
+			cout << istr + 1 << " " << patfound.first - len_pattern(patfound.second);
+			isfound = 1;
+			break;
+		}
+	}
+
+	if (!isfound) cout << "Passed";  
+	
+
+    return 0;
+}
