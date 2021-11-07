@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int find_compt(int ivert, vector <int>& graph) {
+    return (graph[ivert] == ivert) ? ivert : graph[ivert] = find_compt(graph[ivert], graph);
+}
+
+bool merge_comps(int ivert, int jvert, vector <int>& graph) {
+    bool arecomptdiff = 0;
+    if (find_compt(ivert, graph) != find_compt(jvert, graph))  arecomptdiff = 1;
+    graph[find_compt(ivert, graph)] = find_compt(jvert, graph);
+    return arecomptdiff;
+}
+
+
+int main() {
+    int nVert, nEdge; cin >> nVert >> nEdge;
+    vector <pair<int, int>> vecEdges;
+    pair <int, int> edge;
+    for (int i = 0; i < nEdge; i++) {
+        cin >> edge.first >> edge.second;
+        edge.first--; edge.second--;
+        vecEdges.push_back(edge);
+    }
+
+    int nTears; cin >> nTears;
+    vector <int> tears(nTears);
+    vector <bool> isTorn(nEdge);
+    for (int i = 0; i < nTears; i++) {
+        cin >> tears[i];
+        tears[i]--;
+        isTorn[tears[i]] = 1;
+    }
+
+    vector <int> graph(nVert);
+    for (int i = 0; i < nVert; i++) graph[i] = i;
+    int kcomps = nVert;
+
+    for (int i = 0; i < nEdge; i++)
+        if (!isTorn[i])
+            kcomps -= merge_comps(vecEdges[i].first, vecEdges[i].second, graph);
+
+    vector <int> comps;
+    for (int i = nTears - 1; i >= 0; i--) {
+        comps.push_back(kcomps);
+        kcomps -= merge_comps(vecEdges[tears[i]].first, vecEdges[tears[i]].second, graph);
+    }
+
+    for (int i = comps.size() - 1; i >= 0; i--)
+        cout << comps[i] << " ";
+
+    return 0;
+}
